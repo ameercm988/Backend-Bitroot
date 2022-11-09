@@ -2,6 +2,7 @@ const db = require("../Config/dbConfig");
 const contactHelper = require("../Helpers/contactHelper");
 const collection = require("../Config/collections");
 const object = require("mongodb").ObjectId;
+const Blob = require("buffer").Blob;
 
 module.exports = {
   postContact: async (req, res, next) => {
@@ -139,10 +140,11 @@ module.exports = {
       const checkNum = await db
         .get()
         .collection(collection.CONTACT_COLLECTION)
-        .find({ _id: object(id), number: { $elemMatch: { $eq: number } } }).toArray()    //check for existing number before update
-        if(checkNum.length > 0) {
-            throw new Error('Existing number')
-        } 
+        .find({ _id: object(id), number: { $elemMatch: { $eq: number } } })
+        .toArray(); //check for existing number before update
+      if (checkNum.length > 0) {
+        throw new Error("Existing number");
+      }
       const updatedData = await db
         .get()
         .collection(collection.CONTACT_COLLECTION)
@@ -158,14 +160,61 @@ module.exports = {
           { contactId: object(id) },
           { $set: { city, country, street } }
         );
-        if(updatedData.modifiedCount == 1 && updateAddress.modifiedCount == 1){
-
-            res.status(200).json('updated')
-        } else {
-            throw new Error
-        }
+      if (updatedData.modifiedCount == 1 && updateAddress.modifiedCount == 1) {
+        res.status(200).json("updated");
+      } else {
+        throw new Error();
+      }
     } catch (error) {
-        res.status(400).json(error);
+      res.status(400).json(error);
+    }
+  },
+
+  csvDownloader: async (req, res, next) => {
+    try {
+      const fetchedContacts = await db
+        .get()
+        .collection(collection.CONTACT_COLLECTION)
+        .aggregate([
+          {
+            $lookup: {
+              from: collection.ADDRESS_COLLECTION,
+              localField: "_id",
+              foreignField: "contactId",
+              as: "contacts",
+            },
+          },
+        ])
+        .toArray();
+
+      const refinedData = [];
+
+      const data = Object.keys(fetchedContacts[0]);
+      console.log(data, "datatatata");
+      refinedData.push(data);
+
+      fetchedContacts.forEach((elem) => {
+        refinedData.push(Object.values(elem));
+      });
+
+      console.log(refinedData, "refinedata");
+      let cvsData = "";
+
+      refinedData.forEach((row) => {
+        cvsData += row.join(",") + "\n";
+      });
+
+      const blob = new Blob([cvsData], { type: "text/csv ; charset=utf-8," });
+
+      console.log(blob, "blooooooob");
+
+      const objectUrl = URL.createObjectURL(blob);
+      console.log(objectUrl, "objcturl");
+
+      res.status(200).json(objectUrl);
+    } catch (error) {
+      console.log(error);
+      res.status(400).json(error);
     }
   },
 };

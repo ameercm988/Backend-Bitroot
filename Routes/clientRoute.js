@@ -25,5 +25,7 @@ router.post('/search-contact', controller.searchContact)
 
 router.put('/update-contact/:id', upload.single("image"), controller.updateContact)
 
+router.get('/download-csv', controller.csvDownloader)
+
 
 module.exports = router;
