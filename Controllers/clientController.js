@@ -71,4 +71,47 @@ module.exports = {
       res.status(400).json(error);
     }
   },
+
+  fetchContact : async (req, res, next) => {
+    console.log('hdhdhh');
+    try {
+        const fetchedContacts = await db.get().collection(collection.CONTACT_COLLECTION).aggregate([{
+            $lookup : {
+                from : collection.ADDRESS_COLLECTION,
+                localField : "_id",
+                foreignField : "contactId",
+                as : "contacts"
+            }
+        }]).toArray()
+
+        res.status(200).json(fetchedContacts)
+        // console.log(fetchedContacts);
+    } catch (error) {
+        console.log(error);
+        res.status(400).json(error);
+    }
+  },
+
+  searchContact : async (req, res, next) => {
+    try {
+        const data = req?.body?.search
+        const searchData = await db.get().collection(collection.CONTACT_COLLECTION).find({$text : {$search : data}}).toArray()
+
+        // searchmethod using $regex
+
+        const searchWithRegex = await  db.get().collection(collection.CONTACT_COLLECTION).find({
+            $or : [ {
+                firstname : { $regex : data , $options : "i"},
+                lastname : { $regex : data , $options : "i"}
+            }]
+        }).toArray()
+
+        console.log(searchData, searchWithRegex);
+
+        res.status(200).json(searchData)
+    } catch (error) {
+        console.log(error);
+        res.status(400).json(error);
+    }
+  }
 };
