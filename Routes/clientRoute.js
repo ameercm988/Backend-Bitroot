@@ -23,5 +23,7 @@ router.get('/fetch-contacts', controller.fetchContact)
 
 router.post('/search-contact', controller.searchContact)
 
+router.put('/update-contact/:id', upload.single("image"), controller.updateContact)
+
 
 module.exports = router;

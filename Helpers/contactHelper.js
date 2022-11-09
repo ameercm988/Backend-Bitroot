@@ -6,17 +6,17 @@ module.exports = {
   createContact: (contactInfo) => {
     console.log(contactInfo?.lastname.length);
     return new Promise((resolve, reject) => {
-      db.get().collection(collection.CONTACT_COLLECTION).createIndex(
-        {
-          firstname: "text",
-          number: "text",
-          lastname: "text",
-        }
-      );
+      db.get().collection(collection.CONTACT_COLLECTION).createIndex({
+        firstname: "text",
+        number: "text",
+        lastname: "text",
+      });
 
       db.get().collection(collection.CONTACT_COLLECTION).createIndex(
         {
           number: 1,
+        },
+        {
           unique: true,
         }
       );

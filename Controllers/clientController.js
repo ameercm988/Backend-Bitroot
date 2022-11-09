@@ -72,46 +72,100 @@ module.exports = {
     }
   },
 
-  fetchContact : async (req, res, next) => {
-    console.log('hdhdhh');
+  fetchContact: async (req, res, next) => {
+    console.log("hdhdhh");
     try {
-        const fetchedContacts = await db.get().collection(collection.CONTACT_COLLECTION).aggregate([{
-            $lookup : {
-                from : collection.ADDRESS_COLLECTION,
-                localField : "_id",
-                foreignField : "contactId",
-                as : "contacts"
-            }
-        }]).toArray()
+      const fetchedContacts = await db
+        .get()
+        .collection(collection.CONTACT_COLLECTION)
+        .aggregate([
+          {
+            $lookup: {
+              from: collection.ADDRESS_COLLECTION,
+              localField: "_id",
+              foreignField: "contactId",
+              as: "contacts",
+            },
+          },
+        ])
+        .toArray();
 
-        res.status(200).json(fetchedContacts)
-        // console.log(fetchedContacts);
+      res.status(200).json(fetchedContacts);
+      // console.log(fetchedContacts);
     } catch (error) {
-        console.log(error);
-        res.status(400).json(error);
+      console.log(error);
+      res.status(400).json(error);
     }
   },
 
-  searchContact : async (req, res, next) => {
+  searchContact: async (req, res, next) => {
     try {
-        const data = req?.body?.search
-        const searchData = await db.get().collection(collection.CONTACT_COLLECTION).find({$text : {$search : data}}).toArray()
+      const data = req?.body?.search;
+      const searchData = await db
+        .get()
+        .collection(collection.CONTACT_COLLECTION)
+        .find({ $text: { $search: data } })
+        .toArray();
 
-        // searchmethod using $regex
+      // searchmethod using $regex
 
-        const searchWithRegex = await  db.get().collection(collection.CONTACT_COLLECTION).find({
-            $or : [ {
-                firstname : { $regex : data , $options : "i"},
-                lastname : { $regex : data , $options : "i"}
-            }]
-        }).toArray()
+      // const searchWithRegex = await  db.get().collection(collection.CONTACT_COLLECTION).find({
+      //     $or : [ {
+      //         firstname : { $regex : `/${data}/` , $options : "i"},
+      //         lastname : { $regex : "/" +data +"/" , $options : "i"}
+      //     }]
+      // }).toArray()
 
-        console.log(searchData, searchWithRegex);
+      console.log(searchData, "inex");
+      // console.log(searchWithRegex, 'regex');
 
-        res.status(200).json(searchData)
+      res.status(200).json(searchData);
     } catch (error) {
-        console.log(error);
+      console.log(error);
+      res.status(400).json(error);
+    }
+  },
+
+  updateContact: async (req, res, next) => {
+    try {
+      const { city, street, country, number, email } = req.body;
+      const id = req.params.id;
+      const contactImage =
+        req.protocol +
+        "://" +
+        req.get("host") +
+        "/contactImage/" +
+        req?.file?.filename;
+      const checkNum = await db
+        .get()
+        .collection(collection.CONTACT_COLLECTION)
+        .find({ _id: object(id), number: { $elemMatch: { $eq: number } } }).toArray()    //check for existing number before update
+        if(checkNum.length > 0) {
+            throw new Error('Existing number')
+        } 
+      const updatedData = await db
+        .get()
+        .collection(collection.CONTACT_COLLECTION)
+        .updateOne(
+          { _id: object(id) },
+          { $set: { email: email, contactImage: contactImage } },
+          { $push: { number } }
+        );
+      const updateAddress = await db
+        .get()
+        .collection(collection.ADDRESS_COLLECTION)
+        .updateOne(
+          { contactId: object(id) },
+          { $set: { city, country, street } }
+        );
+        if(updatedData.modifiedCount == 1 && updateAddress.modifiedCount == 1){
+
+            res.status(200).json('updated')
+        } else {
+            throw new Error
+        }
+    } catch (error) {
         res.status(400).json(error);
     }
-  }
+  },
 };
