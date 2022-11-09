@@ -14,13 +14,13 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use(express.static(path.join(__dirname, "contactImage")));
 
-// db.connect((err) => {
-//   if (err) {
-//     console.log("Database not connected" + err);
-//   } else {
-//     console.log(`Database connected succesfully to ${port}`);
-//   }
-// });
+db.connect((err) => {
+  if (err) {
+    console.log("Database not connected" + err);
+  } else {
+    console.log(`Database connected succesfully to ${port}`);
+  }
+});
 
 app.get('/', (req, res, next) => {
     res.send('herookuuuuuuuuuu')
