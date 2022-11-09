@@ -22,6 +22,9 @@ db.connect((err) => {
   }
 });
 
+app.get('/', (req, res, next) => {
+    res.send('herookuuuuuuuuuu')
+})
 app.use("/api/client", clientRoute);
 
 const port = process.env.PORT || 7000;
